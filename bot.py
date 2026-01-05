@@ -1,8 +1,10 @@
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 
-BOT_TOKEN = "7973514860:AAGR0jvuwO-pRFuoxFzijfXSRby3i8cDl5o"
-ADMIN_ID = 5665031779  # Telegram ID របស់អ្នក
+# ✅ Replace static token + ID by environment variable
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
 # Map user ↔ admin reply
 user_map = {}
@@ -13,27 +15,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text
-
     user_map[ADMIN_ID] = user.id
-
-    await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"👤 User ({user.id}):\n{text}"
-    )
-
+    await context.bot.send_message(chat_id=ADMIN_ID, text=f"👤 User ({user.id}):\n{text}")
     await update.message.reply_text("📨 សាររបស់អ្នកបានផ្ញើរទៅ admin ហើយ")
 
 async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id == ADMIN_ID:
         user_id = user_map.get(ADMIN_ID)
         if user_id:
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"💬 RP:\n{update.message.text}"
-            )
+            await context.bot.send_message(chat_id=user_id, text=f"💬 RP:\n{update.message.text}")
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
-
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.User(ADMIN_ID), user_message))
 app.add_handler(MessageHandler(filters.TEXT & filters.User(ADMIN_ID), admin_reply))
